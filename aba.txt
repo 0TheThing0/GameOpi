@@ -1,0 +1,140 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <math.h>
+#include <map>
+#include <queue>
+#include <iomanip>
+#include <set>
+#include <unordered_set>
+#include <numeric>
+
+#define fi first
+#define se second
+#define p_b(a) emplace_back(a)
+#define all(v) v.begin(), v.end()
+#define allr(v) v.rbegin(), v.rend()
+#define sqr(x) (x) * (x)
+#define len(b) (int)(b.size())
+#define fr(i, a, b) for(int i = 0; i < (int)a; i += b)
+#define en "\n"
+#define fast_io ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ldd;
+typedef pair <int, int> pii;
+typedef vector <long long> vll;
+typedef vector <long double> vldd;
+typedef vector <int> vi;
+
+const ll mod = 1e9 + 7;
+const ll neutral = 0LL;
+const ll INF = -2e9;
+
+struct node {
+    ll mn, idmn,  mx, idmx;
+};
+
+int n, m, q;
+vector <ll> reset;
+vector <set <int>> mapping;
+vector <node> tree;
+
+node combine (node l, node r) {
+
+    node res;
+    if (l.mn <= r.mn) {
+        res.mn = l.mn;
+        res.idmn = l.idmn;
+    } else {
+        res.mn = r.mn;
+        res.idmn = r.idmn;
+    }
+
+    if (l.mx >= r.mx) {
+        res.mx = l.mx;
+        res.idmx = l.idmx;
+    } else {
+        res.mx = r.mx;
+        res.idmx = r.idmx;
+    }
+
+    return res;
+
+}
+
+void updateDis(int v, int tl, int tr, int pos, int val) {
+
+    if (tl == tr) {
+        mapping[tl].insert(val);
+        ll k = m - mapping[tl].size();
+        k *= reset[tl];
+        tree[v] = {k, tl, k, tl};
+        return;
+    }
+
+    int tm = (tl + tr) >> 1;
+    if (tm >= pos) {
+        updateDis(2 * v + 1, tl, tm, pos, val);
+    }
+    else updateDis(2 * v + 2, tm + 1, tr, pos, val);
+    tree[v] = combine(tree[2 * v + 1], tree[2 * v + 2]);
+
+}
+
+void updateRes(int v, int tl, int tr, int pos) {
+
+    if (tl == tr) {
+        mapping[tl].clear();
+        reset[tl]++;
+        tree[v] = {ll(m) * reset[tl], tl, ll(m) * reset[tl], tl};
+        return;
+    }
+
+    int tm = (tl + tr) >> 1;
+    if (tm >= pos) {
+        updateRes(2 * v + 1, tl, tm, pos);
+    } else updateRes(2 * v + 2, tm + 1, tr, pos);
+    tree[v] = combine(tree[2 * v + 1], tree[2 * v + 2]);
+
+}
+
+int main()
+{
+    fast_io
+    cin >> n >> m >> q;
+
+    int sz = 1;
+    while(sz < n) {
+        sz *= 2;
+    }
+
+    tree.resize(2 * sz + 1, {1000000000000LL, 0, -1000000000000LL, 0});
+    mapping.resize(n);
+    reset.resize(n, 0);
+    
+    while(q--) {
+        string s;
+        cin >> s;
+        
+        if (s == "DISABLE") {
+            int pos, val;
+            cin >> pos >> val;
+            pos--;
+            updateDis(0, 0, n - 1, pos, val);
+        } else if (s == "RESET") {
+            int pos;
+            cin >> pos;
+            pos--;
+            updateRes(0, 0, n - 1, pos);
+        } else if (s == "GETMAX") {
+            cout << tree[0].idmx + 1 << en;
+        } else cout << tree[0].idmn + 1 << en;
+    }
+
+    return 0;
+}
